@@ -260,3 +260,155 @@ public function destroy(User $user)
     }
 
 
+-User Model
+public function hasAnyRoles($roles)
+    {
+        if ($this->roles()->whereIn('name', $roles)->first()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function hasRole($roles)
+    {
+        if ($this->roles()->where('name', $roles)->first()) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+-AuthServiceProvider
+public function boot()
+    {
+        $this->registerPolicies();
+
+        Gate::define('edit-users', function($user)
+        {
+            return $user->hasRole('admin');
+        });  
+    }
+
+
+-UserController
+use Gate;
+public function edit(User $user)
+    {
+        if (Gate::denies('edit-users')) {
+            return redirect(route('admin.users.index'));
+        }
+
+        $roles = Role::all();
+
+        return view('admin.users.edit')->with([
+            'user' => $user,
+            'roles' => $roles
+        ]);
+    }
+
+-AuthServiceProvider
+public function boot()
+    {
+        $this->registerPolicies();
+
+        Gate::define('edit-users', function($user)
+        {
+            return $user->hasRole('admin');
+        });
+
+        Gate::define('delete-users', function($user)
+        {
+            return $user->hasRole('admin');
+        });
+    }
+
+
+-UserController
+public function destroy(User $user)
+    {
+        if (Gate::denies('delete-users')) {
+            return redirect(route('admin.users.index'));
+        }
+        
+        $user->roles()->detach();
+        $user->delete();
+
+        return redirect()->route('admin.users.index');
+    }
+
+
+-AuthServiceProvider
+public function boot()
+    {
+        $this->registerPolicies();
+
+        Gate::define('manage-users', function($user)
+        {
+            return $user->hasAnyRoles(['admin', 'author']);
+        });
+        
+        Gate::define('edit-users', function($user)
+        {
+            return $user->hasRole('admin');
+        });
+
+        Gate::define('delete-users', function($user)
+        {
+            return $user->hasRole('admin');
+        });
+    }
+
+
+-web Route
+Route::namespace('Admin')->prefix('admin')->name('admin.')->middleware('can:manage-users')->group(function(){
+	Route::resource('/users', 'UsersController', ['except' => ['show', 'create', 'store']]);
+});
+
+
+php artisan migrate:fresh
+php artisan db:seed         - pentru a repopula user-ii
+
+
+-index.blade
+                      <tbody>
+                        @foreach($users as $user)
+                            <tr>
+                              <th scope="row">{{ $user->id }}</th>
+                              <td>{{$user->name}}</td>
+                              <td>{{$user->email}}</td>
+                              <td>{{ implode(',', $user->roles()->get()->pluck('name')->toArray()) }}</td>
+                              <td>
+                                @can('edit-users')
+                                <a href="{{ route('admin.users.edit', $user->id) }}"><button type="button" class="btn btn-primary float-left">Edit</button></a>
+                                @endcan
+                                @can('delete-users')
+                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="float-left">
+                                  @csrf
+                                  @method('DELETE')
+                                  <button type="submit" class="btn btn-warning">Delete</button>
+                                </form>
+                                @endcan
+                              </td>
+                            </tr>
+                        @endforeach
+                      </tbody>
+
+
+
+-AuthServiceProvider
+Gate::define('edit-users', function($user)
+        {
+            return $user->hasAnyRoles(['admin', 'author']);
+        });
+
+
+-app.blade
+				   @can('manage-users')
+                                    <a class="dropdown-item" href="{{ route('admin.users.index') }}">
+                                        User Management
+                                    </a>
+                                    @endcan
+
+

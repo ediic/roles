@@ -328,7 +328,7 @@ public function boot()
 -UserController
 public function destroy(User $user)
     {
-        if (Gate::denies('delete-users')) {
+        if (Gate::denies('delete-users' || Auth::user()->id == $user->id)) {
             return redirect(route('admin.users.index'));
         }
         

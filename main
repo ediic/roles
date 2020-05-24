@@ -1,3 +1,34 @@
+php artisan make:model Post -rcmf
+
+---
+Auth::routes([
+	'register' => false
+]);
+
+@if (Route::has('register'))
+      <li class="nav-item">
+          <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
+      </li>
+@endif
+
+-----
+protected $guarded = [];
+
+-----
+asset('storage/' . $item->image)
+
+-----
+@section('title', 'Edit Details')
+
+----
+{{ old('name') ?? $customer->name }}
+
+-----
+{{ config('app.name') }}
+
+
+
+*********************
 php artisan make:controller \\Admin\\UsersController -r -m User
 
 Route::resource('/admin/users', 'Admin\UsersController', ['except' => ['show', 'create', 'store']]);
@@ -23,7 +54,7 @@ Route::namespace('Admin')->prefix('admin')->name('admin.')->group(function(){
 
 -index.blade:
                 <div class="card-body">
-                    @foreach($users as $user)
+                    @ jih($users as $user)
                         {{ $user->name }} - {{ $user->email }}
                     @endforeach
                 </div>
@@ -559,3 +590,7 @@ public function redirectTo()
         $this->redirectTo = route('home');
         return $this->redirectTo;
     }
+
+
+
+

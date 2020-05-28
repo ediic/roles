@@ -327,7 +327,9 @@ public function boot()
 use Gate;
 public function edit(User $user)
     {
-        if (Gate::denies('edit-users')) {
+        //$this->authorize('edit-users', [$optional]);
+	
+	if (Gate::denies('edit-users')) {
             return redirect(route('admin.users.index'));
         }
 
